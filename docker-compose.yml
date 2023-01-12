@@ -1,0 +1,61 @@
+version: '3'
+services:
+  mongodb:
+    image: mongo
+    environment:
+      MONGODB_USER: "${database_user}"
+      MONGODB_DATABASE: "${database_name}"
+      MONGODB_PASS: "${database_password}"
+    ports:
+      - 27017:27017
+      - 28017:28017  
+    networks: 
+      - mongonet
+    volumes:
+      - plantapp:/data/db
+  mongoClientTemp:
+    image: mongo:latest
+    container_name: mongoClientTemp
+    environment:
+      database_user: "${database_user}"
+      database_name: "${database_name}"
+      database_password: "${database_password}"
+    networks: 
+      - mongonet
+    links:
+      - mongodb
+    command: sleep 10 && mongosh --host mongodb --eval  "db.getSiblingDB('${database_name}').createUser({user:'${database_user}', pwd:'${database_password}', roles:[{role:'readWrite',db:'${database_name}'}]});"
+    depends_on:
+      - mongodb
+  plant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      env: "${env}"
+      port: "${port}"
+      username: "${username}"
+      password: "${password}"
+      rest_url: "${rest_url}"
+      database_user: "${database_user}"
+      database_name: "${database_name}"
+      database_password: "${database_password}"
+    volumes:
+      - $PWD/plant.rb:/plant/plant.rb
+      - $PWD/index.erb:/plant/views/index.erb
+    depends_on:
+      - mongoClientTemp
+    networks: 
+      - mongonet
+    links:
+      - mongodb
+    ports:
+      - ${port}:${port}
+    entrypoint:
+      - ruby
+      - plant.rb
+
+networks:
+  mongonet:
+volumes:
+  plantapp:

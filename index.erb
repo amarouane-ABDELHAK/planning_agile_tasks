@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+	<meta charset="UTF-8">
+	<title>PlAnT</title>
+
+  <script src="js/jquery-1.7.2.min.js"></script>
+  <script> $172 = jQuery.noConflict();</script>
+  <script src="js/jquery.dynatable.js"></script>
+  <script> $dynatable = jQuery.noConflict();</script>
+  <link rel="stylesheet" type="text/css" href="css/bootstrap-2.3.2.min.css">
+  <link rel="stylesheet" type="text/css" href="css/jquery.dynatable.css">
+	<link rel="stylesheet" type="text/css" href="css/custom.css">
+  <link rel="stylesheet" href="jstree/themes/default/style.min.css" />
+	<script src="js/moment/min/moment.min.js"></script>
+	<script src="js/snapsvg/dist/snap.svg-min.js"></script>
+	<script src="dist/frappe-gantt.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+  <script src="jstree/jquery-1.10.2.min.js"></script>
+  <script> $1102 = jQuery.noConflict();</script>
+  <script src="jstree/jstree.min.js"></script>
+
+  <script src="js/jquery.qtip.min.js"></script>
+  <script> $qtip = jQuery.noConflict();</script>
+  <link rel="stylesheet" href="css/jquery.qtip.min.css">
+
+	<script src="src/plant.js"></script>
+
+</head>
+<body>
+
+<br>
+
+<div class="container" style="width: 80%">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="jumbotron">
+        <h1  class="text-center plant_title" style="font-family: -webkit-pictograph;">PlAnT: Planning Agile Tasks</h1>
+        <%@params.keys.each do |par| %>
+            <% unless @params[par].nil? ||  @params[par].empty? %>
+                <h3><code><%=par%> : <%=@params[par]%></code></h3>
+            <%end%>
+        <% end%>
+      </div>
+    </div>
+  </div>
+  <div class="row" id="row-main">
+    <div class="col-md-3 collapsed" id="sidebar">
+
+      <div id="jstree">
+      <ul>
+        <li id ="priority"> Priority
+
+          <ul>
+            <% @priority_type.each do |priority| %>
+                <li id="priority:<%= priority %>"><%= priority %></li>
+            <% end %>
+
+
+          </ul>
+        </li>
+        <li id ="component">Components
+          <ul>
+
+
+            <% @tree.each do |tree| %>
+
+
+
+                <li > <%= tree[:component][:name] %>
+
+                  <ul>
+
+
+                    <% tree[:component][:epics].each do |epic| %>
+
+
+                        <li id="epic:<%=epic%> => <%= tree[:component][:name] %>"><%= epic %></li>
+                    <% end %>
+
+                  </ul>
+
+                </li>
+            <% end %>
+          </ul>
+        </li>
+        <li id ="people"> People
+
+          <ul>
+            <% @people.each do |person| %>
+                <li id="person:<%= person[:name] %>"><%= person[:name] %></li>
+            <% end %>
+
+
+          </ul>
+        </li>
+
+
+
+      </ul>
+      </div>
+    </div>
+    <div class="col-md-12" id="content">
+
+      <div class="btn-group" role="group" aria-label="Controls" style="margin: 12px">
+        <button type="button" class="btn btn-primary toggle-sidebar">Show Filter</button>
+        <form method="POST" action="/synchronize" style="float: left">
+          <input type="submit" class="btn btn-primary costume-filter" value="Synchronize With Jira">
+        </form>
+
+        <form method="POST" action="/" >
+          <input type="hidden" name = "priorities" value="">
+          <input type="hidden" name = "epics" value="">
+          <input type="hidden" name = "people" value="">
+          <input type="submit" class="btn btn-primary costume-filter" value="Apply Filter" >
+        </form>
+      </div>
+      <ul class="legend">
+        <li><span class="blocker"></span> Blocker</li>
+        <li><span class="critical"></span> Critical</li>
+        <li><span class="major"></span> Major</li>
+        <li><span class="minor"></span> Minor</li>
+        <li><span class="trivial"></span> Trivial</li>
+      </ul>
+      <div class="gantt-container">
+
+        <svg id="gantt" width="400" height="600"></svg>
+
+      </div>
+      <br>
+      <div class="text-center button_list">
+        <button type="button" class="btn btn-primary">Quarter Day</button>
+        <button type="button" class="btn btn-primary">Half Day</button>
+        <button type="button" class="btn btn-primary">Day</button>
+        <button type="button" class="btn btn-primary active">Week</button>
+        <button type="button" class="btn btn-primary">Month</button>
+
+      </div>
+
+
+        <!-- in this example the tree is populated from inline HTML -->
+
+
+
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+  <div >
+    <div class="container" style="width: 80%">
+
+      <hr class="devider_1"/>
+      <h1 class="text-center"> Jira Tasks List</h1>
+      <table id="actions_table" class="responstable">
+        <thead>
+        <tr>
+          <th>Jira Number</th>
+          <th>Description</th>
+          <th>Epic</th>
+          <th>Reporter</th>
+          <th>Assignee</th>
+          <th>Due In (days)</th>
+          <th>Status </th>
+          <th>Type</th>
+          <th>Priority</th>
+
+        </tr>
+        </thead>
+        <tbody>
+        <% @action_table.each do |action| %>
+
+            <tr>
+              <td><a href="https://bugs.earthdata.nasa.gov/browse/<%=action[:name] %>" target="_blank"><%=action[:name] %> </a></td>
+              <td><%=action[:summary] %></td>
+              <td><a href="https://bugs.earthdata.nasa.gov/browse/<%=action[:epic] %>" target="_blank"><%= action[:epic]%></a></td>
+              <td> <a href="<%=action[:reporter][:reporter_url] %>" target="_blank"> <%=action[:reporter][:reporter_name] %> </a> </td>
+              <td > <a href="<%=action[:assignee][:assignee_url] %>"  target="_blank"> <%=action[:assignee][:assignee_name] %> </a></td>
+
+
+              <% if action[:due_days] < 0 %>
+
+                  <td style="color: red!important;"><%= action[:due_days]%></td>
+
+
+              <% else %>
+                  <td style="color: green!important;"><%= action[:due_days]%></td>
+
+
+              <% end %>
+
+
+
+              <td><%=action[:status] %></td>
+              <td><%=action[:type] %></td>
+              <td><%=action[:priority] %></td>
+            </tr>
+        <% end %>
+
+        </tbody>
+      </table>
+
+      <hr class="devider_1"/>
+      <h1 class="text-center"> People </h1>
+
+
+      <table id="actions_table_gain" class="responstable">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <% @status_task.each do |s| %>
+          <th><%=s%> </th>
+          <% end %>
+        </tr>
+        </thead>
+        <tbody>
+        <% @workers.keys.each do |k| %>
+
+            <tr>
+              <td><%=k %> </td>
+              <% @status_task.each do |s| %>
+                  <td><%=@workers[k][s]%> </td>
+              <% end %>
+
+            </tr>
+        <% end %>
+
+        </tbody>
+      </table>
+
+
+    </div>
+  </div>
+
+
+
+
+
+
+	<script>
+
+
+
+
+
+
+
+			let tasks = [];
+
+			//Every action will have [name, start, end, parent]
+      <% @actions.each do |action| %>
+
+
+			tasks.push({
+					start:new Date("<%=action[:start].strftime("%m/%d/%Y")%>"),
+					end:new Date("<%=action[:end].strftime("%m/%d/%Y") %>"),
+					name: "<%=action[:name] %>",
+          id: "<%=action[:name] %>",
+          dependencies: "<%=action[:parent] %>"  ,
+          summary: "<%=action[:summary].gsub('"', '_') %>"  ,
+          progress: "<%=action[:progress] %>",
+          assignee_name: "<%=action[:assignee][:assignee_name] %>",
+          assignee_url:"<%=action[:assignee][:assignee_url] %>",
+          custom_class: "<%=action[:priority] %>",
+          type: "<%=action[:type] %>",
+          components: "DEVELOP",
+          task_duration: "<%=action[:task_duration] %>"
+			});
+
+
+      <% end %>
+
+
+
+
+
+		let gantt_chart = new Gantt("#gantt", tasks, {
+
+        custom_popup_html: function(task) {
+            // the task object will contain the updated
+//            // dates and progress value
+//            //console.log(task);
+//
+            return ` <div class="details-container">
+          <h5><a href="https://bugs.earthdata.nasa.gov/browse/${task.name}" target="_blank"> ${task.name} </a> [${task.type} : ${task.custom_class}]</h5>
+          <p>Assigned To <a href= ${task.assignee_url} target="_blank">${task.assignee_name} </a> </p>
+          <p>Components ${task.components}</p>
+          <p>${task.progress}% completed!</p>
+        </div>`;
+        },
+
+
+
+        on_click: function (task) {
+				//console.log(task);
+			},
+
+			on_date_change: function(task, start, end) {
+				//console.log(task, start, end);
+			},
+			on_progress_change: function(task, progress) {
+				//console.log(task, progress);
+			},
+			on_view_change: function(mode) {
+				//console.log(mode);
+			}
+
+
+		});
+      gantt_chart.change_view_mode('Week');
+
+
+
+
+  </script>
+
+
+</body>
+</html>
