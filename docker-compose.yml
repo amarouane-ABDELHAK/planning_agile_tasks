@@ -20,11 +20,14 @@ services:
       database_user: "${database_user}"
       database_name: "${database_name}"
       database_password: "${database_password}"
+    
+    volumes:
+      - $PWD/setup_permission.sh:/setup_permission.sh
     networks: 
       - mongonet
     links:
       - mongodb
-    command: sleep 10 && mongosh --host mongodb --eval  "db.getSiblingDB('${database_name}').createUser({user:'${database_user}', pwd:'${database_password}', roles:[{role:'readWrite',db:'${database_name}'}]});"
+    command: "bash /setup_permission.sh"
     depends_on:
       - mongodb
   plant:

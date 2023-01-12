@@ -11,7 +11,7 @@ config_file './config.yml'
 set :port , ENV['port'] #settings.install_ENV['port]
 set :bind, '0.0.0.0'
 
-$jira_project ='CDDIS'
+$jira_project ='CLDGIANNI'
 
 def get_jira_data(project='VISAGE', offset=0, max_results=1000,id=nil, updated_date=nil)
   base_query = "#{ENV['rest_url']}#{project}"
